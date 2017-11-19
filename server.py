@@ -17,10 +17,10 @@ class Server(object):
             self.s.bind((self.host,self.port))
         except socket.error, msg:
             print("Bind Failed")
-            
         self.numConnections = 10
-        self.players = []
         self.s.listen(self.numConnections)
+
+        self.players = []
         self.conn = None
         self.hallOfFameList = ["Tom", "Dick","Harry"]
         self.usersList = [] 

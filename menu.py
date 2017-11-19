@@ -94,7 +94,6 @@ class ClientMenu(object):
             # Main Menu
             if self.state == 1:
                 d = self.sendPrompt(self.mainScreen)
-                print("State1 Recieved: ", d)
                 menu = "main"
 
             # Start Game menu
@@ -106,10 +105,11 @@ class ClientMenu(object):
             if self.state == 3:
                 return (self.conn, self.username,self.difficultyLevel)
 
-            print("state: ", self.state)            
-            print("menu: ", menu)
-            print("d: ", d)
-            self.request[menu][int(d)]()
+            #print("state: ", self.state)            
+            #print("menu: ", menu)
+            #print("d: ", d)
+            if d.isdigit():
+                self.request[menu][int(d)]()
 
     def print_state(self):
         print("username: ", self.username )
