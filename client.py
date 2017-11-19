@@ -1,5 +1,4 @@
 import socket
-from menu import ClientMenu
 
 class Client(object):
     def __init__(self, host='localhost', port=2222):
@@ -10,15 +9,11 @@ class Client(object):
         self.host = host
         self.port = port
         self.s.connect((self.host,self.port)) 
-        self.menu = ClientMenu()
         self.request = None
     
     def recieve(self):
-        d = self.s.recv(4096)
-        return self.unpack(d) 
-
-    def isValidCreds(self):
-        pass
+        return self.s.recv(4096)
+        #return self.unpack(d) 
 
     def makePkt(self,data):
         return " ".join(data)
@@ -32,6 +27,7 @@ class Client(object):
         self.s.send(data)
 
     def run(self):
+        """
         cmd = "menu"
         data = None
         while True:
@@ -49,9 +45,14 @@ class Client(object):
 
             elif cmd == "playgame":
                 print("In Play game mode.. lets play hangman")
+        """
 
-            cmd, data = self.recieve()                          
-            print("Recieved: ", data)
+        while True:
+            data = self.recieve()                          
+            print data
+            resp = raw_input(">> ")
+            self.send(resp)
 
-c = Client(port=2221)                
+c = Client(port=1222)                
 c.run()
+

@@ -1,6 +1,9 @@
 import socket
 from thread import *
 import sys
+from menu import ClientMenu
+from users import Player
+from game import Hangman
 
 class Server(object):
     def __init__(self, host='', port=2222):
@@ -19,16 +22,11 @@ class Server(object):
         self.players = []
         self.s.listen(self.numConnections)
         self.conn = None
-        self.data = None
         self.hallOfFameList = ["Tom", "Dick","Harry"]
         self.usersList = [] 
         self.gamesList = ["Game1","Game2"]
+        self.state = 0
         self._populateData()
-        self.request = {"hall":self.hall, 
-                        "login":self.login,
-                        "makeUser":self.makeUser,
-                        "games":self.games,
-                        "difficulty":self.difficulty}
 
     def _populateData(self):
         f = open("users.txt",'r')
@@ -36,71 +34,22 @@ class Server(object):
             user,paswd = user.strip().split(" ") 
             self.usersList.append((user,paswd))
         f.close()
-   
-    def makePkt(self, cmd, data):
-        cmd = str(cmd.strip())
-        if isinstance(data,list):
-            data = str(" ".join([word.replace(" ", "_") for word in data]))
-        else:
-            data = str(data.strip())
-        return cmd +" "+ data
-
-    def unPackPkt(self,data):
-        #command is first argument, data is the rest
-        d = data.strip().split(" ")
-        return d[0], d[1:]
-
-    ######### Menu Option Responses ############
-    def login(self):
-        print("Processing Login")
-        for user, paswd in self.usersList:
-            if user == self.data[0] and paswd == self.data[1]:
-                print("User: ", user, " Authenticated!")
-                return self.makePkt("game","True")
-        print("[!]Authentication Failed!")
-        return self.makePkt("menu","False")
-
-    def hall(self):
-        print("Retrieving Hall of Fame...")
-        menu_cmd = self.data[0]
-        return self.makePkt(menu_cmd,self.hallOfFameList) 
-    
-    def makeUser(self):
-        print("Making User...")
-        f = open('users.txt', 'a')
-        creds = self.data[0] + " " + self.data[1] + "\n"
-        f.write(creds)
-        f.close()
-        return self.makePkt("menu","True")
-   
-    def games(self):
-        print("Retrieving Games List...")
-        if self.data[0] == "False" and self.data[1] == "True" and self.data[2] == "False":
-            return self.makePkt("game",self.gamesList)
-        
-        if self.data[0] == "True" and self.data[1] == "False" and self.data[2] == "False":
-            return self.makePkt("difficulty","True")
-
-    def difficulty(self):
-        self.difficultyLevel = int(self.data[0])
-        print("Set difficulty to: ", self.difficultyLevel)
-        return self.makePkt("playgame",str(self.difficultyLevel))
-    ######### END Menu Option Responses ############
 
     def process(self,conn, players):
         while True:
-            d = conn.recv(1024)
-            if d == "":
-                break
+            menu = ClientMenu(conn=conn, usersFilename="users.txt",
+                              gameList=self.gamesList, 
+                              hallOfFameList=self.hallOfFameList)
+        
+            connection, username, difficulty = menu.run() 
+            #Pass these parameters into Game or Player object
+            player = Player(name=username, conn=connection)
+            print("players name: ", player.name)
+            hangman = Hangman()
+            hangman.difficulty = difficulty
+            hangman.join(player)
+            hangman.play()
 
-            #print("Recieved: ", self.unPackPkt(d))
-            (cmd, self.data) = self.unPackPkt(d)
-            if cmd in self.request:
-                conn.send(self.request[cmd]())
-            else:
-                print("[!] recieved Invalid packet")
-                #sys.exit()
-                    
     def run(self):
         while True:
             # wait to accept connection (blocking call)
@@ -111,5 +60,5 @@ class Server(object):
 
 
 if __name__ == "__main__":
-    s = Server(port=2221)
+    s = Server(port=1222)
     s.run()
