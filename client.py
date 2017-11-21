@@ -1,4 +1,6 @@
+#!/usr/bin/python
 import socket
+from os import system
 
 class Client(object):
     def __init__(self, host='localhost', port=2222):
@@ -22,7 +24,8 @@ class Client(object):
             print data
             resp = raw_input(">> ")
             self.send(resp)
+            system("clear")
 
-c = Client(port=1222)                
+c = Client(port=2222)                
 c.run()
 

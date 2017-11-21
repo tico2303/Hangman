@@ -1,14 +1,15 @@
+#!/usr/bin/python
 import sys
 
 class ClientMenu(object):
-    def __init__(self,usersFilename, conn,gameList=[], hallOfFameList=[]):
-        self.conn = conn
-        self.username = None
-        self.passwd = None
+    def __init__(self,usersFilename,player, gameList=[], hallOfFameList=[]):
+        self.conn = player.conn
         self.difficultyLevel = 0
-        self.gamesList =gameList
+        self.player = player
+        self.gamesList = gameList
         self.hallOfFameList = hallOfFameList
         self.usersFilename = usersFilename
+        self.gameChoice = None
         self.mainScreen ="1.Login\n2.Make New User\n3.Hall of fame\n4.Exit\n"
         self.loginScreen1 = "What is your user name?\n" 
         self.loginScreen2 = "What is your user password?\n"
@@ -26,10 +27,9 @@ class ClientMenu(object):
                         "game":{1:self.difficulty,
                                 2:self.getGamesList,   
                                 3:self.hall,
-                                4:self.exit}
+                                4:self.exit},
                                }
          
-
     def _populateData(self):
         f = open(self.usersFilename,'r')
         for user in f.readlines():
@@ -38,55 +38,84 @@ class ClientMenu(object):
         f.close()
     
     def login(self):
-        print("Processing Login")
-        self.username = self.sendPrompt(self.loginScreen1)
+        print("[+] Processing Login")
+        username = self.sendPrompt(self.loginScreen1)
         password = self.sendPrompt(self.loginScreen2)
-        #Authenticate Login
-        for user, paswd in self.usersList:
-            if user == self.username and paswd == password:
-                print("User: ", self.username, " Authenticated!")
-                self.state = 2
-                return self.state
-        print("[!]Authentication Failed!")
-        self.state = 1
-        return self.state
+        if username != None and password != None:
+            #Authenticate Login
+            for user, paswd in self.usersList:
+                if user == username and paswd == password:
+                    print("[+] User: ", username, " Authenticated!")
+                    self.player.name = username 
+                    self.player.passwd = password
+                    self.state = 2
+                    return self.state
+        else:
+            print("[!]Authentication Failed!")
+            self.sendPrompt("[!]Authentication Failed!\n\n", error=True)
+            self.state = 1
+            return self.state
 
     def hall(self):
-        print("Retrieving Hall of Fame...")
+        print("[+] Retrieving Hall of Fame...")
         msg = "***HALL OF FAME***\n"+"\n".join(self.hallOfFameList) +"\n"+"*"*18+"\n"
         self.conn.send(msg) 
         return 1 
     
     def makeUser(self):
-        print("Making User...")
+        print("[+] Making User...")
         f = open(self.usersFilename, 'a')
         username = self.sendPrompt(self.loginScreen1)
         password = self.sendPrompt(self.loginScreen2)
-        creds = username + " " + password + "\n" 
-        f.write(creds)
-        f.close()
-        self.state =2
+        if username != None and password != None:
+            self.player.name = username 
+            self.player.passwd = password
+            creds = username + " " + password + "\n" 
+            f.write(creds)
+            f.close()
+            self.state =2
+        else:
+            print("[!] Make User Failed")
+            self.sendPrompt("[!] Make User Failed Try again", error=True)
         return self.state
    
     def getGamesList(self):
-        print("Retrieving Games List...")
-        self.conn.send(" ".join(self.gamesList)+"\n")      
+        print("[+] Serving Games List...")
+        g = [str(i+1)+"."+game.name+"\n" for i,game in enumerate(self.gamesList)]
+        choice = self.sendPrompt("".join(g) +"\n")
+        if choice != None:
+            self.gameChoice = self.gamesList[int(choice)-1]
+            self.conn.send(self.gameChoice.name + " selected!\n\n")
+            self.difficulty()
+            return 1
+        else:
+            print("[!] Invalid Games menu option")
 
     def difficulty(self):
+        print("[+] Setting Difficulty Level...")
         self.difficultyLevel = self.sendPrompt(self.difficultyScreen)
         self.state = 3
         return self.state
 
     def exit(self):
-        print("create exiting...")
+        print("[+] Closing Connection and exiting...")
+        self.conn.close()
     ######### END Menu Option Responses ############
 
-    def sendPrompt(self,screen):
-        self.conn.send(screen)
-        d = self.conn.recv(1024)
-        if d == "":
-            return None
-        return d
+    def isValid(self,resp):
+        if resp == "":
+            return False
+
+    def sendPrompt(self,screen,error=False):
+        if error == False:
+            self.conn.send(screen)
+            d = self.conn.recv(1024)
+            if d == "":
+                return None
+            return d
+        else:
+            self.conn.send(screen)
+            
             
     def run(self):
         self.state = 1
@@ -99,24 +128,29 @@ class ClientMenu(object):
             # Start Game menu
             if self.state == 2:
                 d = self.sendPrompt(self.gamesScreen )     
+                """
+                if int(d) == 2:
+                    self.state =4
+                """
                 menu = "game"
-
+            
             # return to play Game
+            #if self.state == 4:
+                
             if self.state == 3:
-                return (self.conn, self.username,self.difficultyLevel)
+                return (self.player,self.gameChoice, self.difficultyLevel)
 
             #print("state: ", self.state)            
             #print("menu: ", menu)
             #print("d: ", d)
-            if d.isdigit():
-                self.request[menu][int(d)]()
+            if d != "":
+                if d.isdigit():
+                    self.request[menu][int(d)]()
 
     def print_state(self):
         print("username: ", self.username )
         print("passwd: ", self.passwd)
-        #print("newUser flag: ", self.newUser )
-        #print("difficulty level: ", self.difficulty)
-        #print("newGame flag: ",self.newGame)
+        print("difficulty level: ", self.difficulty)
         print("gameList flag: ",self.gameList)
         print("hallOfFame flag: ",self.hallOfFame)
          

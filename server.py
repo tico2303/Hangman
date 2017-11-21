@@ -1,5 +1,7 @@
+#!/usr/bin/python
 import socket
-from thread import *
+import threading
+from thread import start_new_thread
 import sys
 from menu import ClientMenu
 from users import Player
@@ -19,46 +21,101 @@ class Server(object):
             print("Bind Failed")
         self.numConnections = 10
         self.s.listen(self.numConnections)
+        
+    def run(self):
+        raise NotImplementedError
 
+    def close(self):
+        self.s.close()
+
+class HangmanServer(Server):
+    def __init__(self, host='', port=2222):
+        super(HangmanServer,self).__init__(host,port)
+        #self.usersList = []
         self.players = []
-        self.conn = None
         self.hallOfFameList = ["Tom", "Dick","Harry"]
-        self.usersList = [] 
-        self.gamesList = ["Game1","Game2"]
-        self.state = 0
-        self._populateData()
+        self.gamesList = [Hangman(name="HangmanA"), Hangman(name="HangmanB")]
+        #self._populateData()
 
+    """
     def _populateData(self):
         f = open("users.txt",'r')
         for user in f.readlines():
             user,paswd = user.strip().split(" ") 
             self.usersList.append((user,paswd))
         f.close()
-
-    def process(self,conn, players):
-        while True:
-            menu = ClientMenu(conn=conn, usersFilename="users.txt",
-                              gameList=self.gamesList, 
-                              hallOfFameList=self.hallOfFameList)
+    def broadcast(self,connection,message):
+        for player in self.players:
+            if player.conn != connection:
+                try:
+                    player.conn.send(message)
+                except: 
+                    # socket is broken
+                    player.conn.close()
+                    #remove from players list
         
-            connection, username, difficulty = menu.run() 
-            #Pass these parameters into Game or Player object
-            player = Player(name=username, conn=connection)
-            print("players name: ", player.name)
-            hangman = Hangman()
-            hangman.difficulty = difficulty
-            hangman.join(player)
-            hangman.play()
+    """
 
+    def process(self,player, playersList):
+        #whle True
+        while player in playersList:
+            try:
+                    try: 
+                        menu = ClientMenu(player=player, usersFilename="users.txt",
+                                          gameList=self.gamesList, 
+                                          hallOfFameList=self.hallOfFameList)
+                    
+                        player, gameChoice, difficulty = menu.run() 
+                        player.send("Done With Menu\n")
+                        #print("players name: ", player.name)
+                        #print("players addr: ", player.addr)
+                    except:
+                        print("[!] Failed in Menu processing")
+                    print("gameChoice: ", gameChoice)
+                    try:
+                    #create new game
+                        if gameChoice == None:
+                            
+                            hangman = Hangman(name=player.name)
+                            print("Playing: ", hangman.name)
+                            hangman.difficulty = difficulty
+                            hangman.add(player)
+                            hangman.play()
+                            #self.gamesList.append(hangman)
+
+                        #join existing game
+                        else:
+                            hangman = None
+                            for game in self.gamesList:
+                                if game.name == gameChoice.name:
+                                    game.add(player)
+                                    hangman = game
+                            print("Playing: ", hangman.name)
+                            hangman.play()
+                    except:
+                        print("[!] Failure in Game process")
+                
+            except:
+                print("[!] Player: ", player.name, " disconnected")
+                self.players.remove(player)
+                
     def run(self):
+        print("[+] Welcome to the Hangman Server\n")
         while True:
             # wait to accept connection (blocking call)
             conn, addr = self.s.accept()
-            if addr not in self.players:
-                self.players.append((conn,addr))
-            self.process(conn,self.players)
+            player = Player(conn=conn,addr=addr)
+            if player not in self.players:
+                self.players.append(player)
+           
+            try: 
+                #self.process(player,self.players)
+                start_new_thread(self.process,(player,self.players))
+            except:
+                print("[!] Failed to create Thread")
 
 
 if __name__ == "__main__":
-    s = Server(port=1222)
+    s = HangmanServer(port=2222)
     s.run()
+    s.close()
