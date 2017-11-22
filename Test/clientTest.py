@@ -23,14 +23,9 @@ class Client(object):
             data = self.recieve()                          
             print data
             resp = raw_input(">> ")
-            while resp == "":
-                print("[!] Invalid input!\n")
-                print data
-                resp = raw_input(">> ")
-            
             self.send(resp)
             system("clear")
 
-c = Client(port=1222)                
+c = Client(port=8333)                
 c.run()
 

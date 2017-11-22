@@ -13,19 +13,26 @@ class Game(object):
         self.difficulty = 1
         self.name = name + str(random.randint(0,10000))
         self.active = False
+        self.end = False
 
     def add(self,player):
         #self.lock.acquire()
-        print("[+] Player: ", player.name, " joined the Game!")
+        print("[+] Player: ", player, " joined the Game!")
         if player not in self.playersList:
             self.playersList.append(player)
         #self.lock.release()
 
     def remove(self,player):
-        for i, user in enumerate(self.playersList):
-            if user.name == player.name:
-                del self.playersList[i]
-                break
+        print("removing player")
+        if len(self.playersList) > 0:
+            for i, user in enumerate(self.playersList):
+                if user.name == player.name:
+                    del self.playersList[i]
+                    break
+        else:
+            print("No more players setting end")
+            self.end = True
+
     
     def play(self):
         raise NotImplementedError
@@ -48,11 +55,12 @@ class Hangman(Game):
         if word not in self.wordList:
             self.wordList.append(word)        
 
+
     def getRandomWord(self):
         return random.choice(self.wordList)         
 
     def isPuzzleSolved(self):
-        if "_" not in self.puzzle:
+        if "_" not in self.puzzle or self.end:
             return True
         else:
             return False
@@ -64,18 +72,21 @@ class Hangman(Game):
             return False
 
     def guessLetter(self, player, letter):
-        print("[+] Guessing letter")
+        #print("[+] Guessing letter")
         #self.lock.acquire()
         self.guesses.append(letter)
         for index,ch in enumerate(self.word):
             if ch == letter and self.puzzle[index] != self.solution[index]: 
                 self.puzzle[index] = self.solution[index]
-                #print("player", player.name, " got it right")
+                print("player", player.name, " got it right")
                 player.score +=1 
+                return True
                 #print("his score is: ", player.score)
+        return False
         #self.lock.release()
 
     def guessWord(self, player, word):
+        print("Guessing word!")
         if word.lower() == self.word.lower():
             player.score += len(self.word)
             self.puzzle = self.word
@@ -89,10 +100,11 @@ class Hangman(Game):
         else:
             correct = self.guessWord(player,guess)
             if not correct:
-                print("[+] Incorrect Word Guess.. removing: ", player.name)
+                print("Incorrect word guess.. removing player")
                 self.remove(player)
         return correct
-
+        
+        
     def setup(self):
         print("[+] Setting up hangman game")
         self.word = self.getRandomWord()
@@ -128,7 +140,7 @@ class Hangman(Game):
 
     def showGuesses(self):
         #print("[+] Showing Guesses")
-        return " ".join(self.guesses) + "\n\n\n"
+        return "Guesses: "+ " ".join(self.guesses) + "\n\n\n"
 
     def showBoard(self):
         #print("[+] Showing Board to: ", self.playersList[self.turn%(len(self.playersList))])        
@@ -136,44 +148,52 @@ class Hangman(Game):
         board = banner + self.showPuzzle() +  self.showGuesses()+ self.showPlayers() 
         return board
 
-    def broadCastBoard(self):
+    def broadCastBoardAll(self):
         for player in self.playersList:
-            player.conn.send(self.showBoard())
+            #if player != self.playersList[self.turn%(len(self.playersList))]:
+            player.send(self.showBoard())
 
-    def broadCastExclusive(self,player,msg):
+    def broadCastBoard(self,player):
         for p in self.playersList:
             if p != player:
-                player.send(msg)
+                player.send(self.showBoard())
 
     def play(self):
         self.setup()             
         self.active = True
         print("[+] Starting Game loop")
+        pl = [Player(name="NewGuy1"),Player(name="AnotherPlayer1")] 
+        count = 0
         while not self.isPuzzleSolved() or not self.isMaxGuesses():
             player = self.nextPlayer() 
-            self.broadCastBoard()
+            self.broadCastBoardAll()
             guess = player.recv()
             correct = self.guess(player,guess)
-
-            # keep guessing until you have a wrong answer, puzzle is solved or max guesses is reached
+            if count <2:
+                self.add(pl[count])
+            count +=1
+            
             while correct and not self.isPuzzleSolved() and not self.isMaxGuesses():
-                self.broadCastBoard()
+                self.broadCastBoardAll()
                 guess = player.recv()
                 correct = self.guess(player,guess)
                 if not correct:
                     break
+                 
 
         self.active = False
         if self.isPuzzleSolved():
-            self.boardCastBoard()
+            self.broadCastBoardAll()
             #player.send(self.showBoard())
-            player.send("You Win!\n\n")
-            self.broadCastExclusive(player,"You Lose\n\n")
+            player.send("You Won!\n\n")
+            for p in self.playersList:
+                if p != player:
+                    p.send("You Lose\n")
             return self.active 
         else:
-            self.boardCastBoard()
+            self.broadCastBoardAll()
             #player.send(self.showBoard())
-            self.broadCastExclusive(None, "You Lost\n\n")
+            player.send("You Lost!\n\n")
             return self.active
     
             
@@ -181,13 +201,14 @@ if __name__ == "__main__":
     from users import Player
 
     hangman = Hangman(name="TestGame")
+    hangman.difficulty = 2
     playerList = []  
-    for player in ["Tom", "Dick","Harry"]:
-        p = Player("conn", "addr", name=player) 
+    for player in ["Tom", "Dick"]:
+        p = Player(name=player) 
         playerList.append(p) 
         hangman.add(p)     
+    hangman.play()
     #hangman.playersList = playerList
     print("hangman playersList: ", hangman.playersList)
-    hangman.play()
 
 

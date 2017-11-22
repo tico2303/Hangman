@@ -86,6 +86,7 @@ class ClientMenu(object):
         if choice != None:
             self.gameChoice = self.gamesList[int(choice)-1]
             self.conn.send(self.gameChoice.name + " selected!\n\n")
+            #self.conn.send(self.gameChoice.getName() + " selected!\n\n")
             self.difficulty()
             return 1
         else:

@@ -44,6 +44,7 @@ class HangmanServer(Server):
             user,paswd = user.strip().split(" ") 
             self.usersList.append((user,paswd))
         f.close()
+
     def broadcast(self,connection,message):
         for player in self.players:
             if player.conn != connection:
@@ -59,45 +60,55 @@ class HangmanServer(Server):
     def process(self,player, playersList):
         #whle True
         while player in playersList:
-            try:
-                    try: 
-                        menu = ClientMenu(player=player, usersFilename="users.txt",
-                                          gameList=self.gamesList, 
-                                          hallOfFameList=self.hallOfFameList)
-                    
-                        player, gameChoice, difficulty = menu.run() 
-                        player.send("Done With Menu\n")
-                        #print("players name: ", player.name)
-                        #print("players addr: ", player.addr)
-                    except:
-                        print("[!] Failed in Menu processing")
-                    print("gameChoice: ", gameChoice)
-                    try:
-                    #create new game
-                        if gameChoice == None:
-                            
-                            hangman = Hangman(name=player.name)
-                            print("Playing: ", hangman.name)
-                            hangman.difficulty = difficulty
-                            hangman.add(player)
-                            hangman.play()
-                            #self.gamesList.append(hangman)
+            menu = ClientMenu(player=player, usersFilename="users.txt",
+                              gameList=self.gamesList, 
+                              hallOfFameList=self.hallOfFameList)
+        
+            player, gameChoice, difficulty = menu.run() 
+            player.send("Done With Menu\n")
+            #print("players name: ", player.name)
+            #print("players addr: ", player.addr)
+            #print("[!] Failed in Menu processing")
 
-                        #join existing game
-                        else:
-                            hangman = None
-                            for game in self.gamesList:
-                                if game.name == gameChoice.name:
-                                    game.add(player)
-                                    hangman = game
-                            print("Playing: ", hangman.name)
-                            hangman.play()
-                    except:
-                        print("[!] Failure in Game process")
+            #print("gameChoice: ", gameChoice.getName())
+            print("gameChoice: ", gameChoice)
+            #try:
+            #if gameChoice.getName() not in [x.getName() for x in self.gamesList] :
+            #create new game
+            if gameChoice not in self.gamesList:
+                print("[+] Creating New Game")
+                #print "gameChoice in gamesList: ", gameChoice.name 
+                hangman = Hangman(name=player.name)
+                self.gamesList.append(hangman)
+                #hangman.start()
+                print("Playing: ", hangman.name)
+                hangman.difficulty = difficulty
+                hangman.add(player)
+                active = hangman.play()
+                """
+                if not active:
+                    #kill thread
+                    hangman.join()
+                """
+
+            #join existing game
+            else:
+                #print("gameChoice: ", gameChoice.getName(), " NOT in gamesList")
+                print("[+] Joining ", gameChoice)
+                hangman = None
+                for game in self.gamesList:
+                    if game.name == gameChoice.name:
+                        game.add(player)
+                        hangman = game
+                print("Playing: ", hangman.name)
+                active = hangman.play()
+                """
+                if not active:
+                    hangman.join()
+                """
+            #except:
+            #print("[!] Failure in Game process")
                 
-            except:
-                print("[!] Player: ", player.name, " disconnected")
-                self.players.remove(player)
                 
     def run(self):
         print("[+] Welcome to the Hangman Server\n")
@@ -116,6 +127,6 @@ class HangmanServer(Server):
 
 
 if __name__ == "__main__":
-    s = HangmanServer(port=2222)
+    s = HangmanServer(port=1222)
     s.run()
     s.close()
