@@ -5,11 +5,18 @@ from os import system
 from words import wordlist
 import threading
 
-#class Game(threading.Thread):
+class ThreadedHangman(threading.Thread):
+    def __init__(self, name,playersList=[],*args, **kwargs):
+        super(ThreadedHangman, self).__init__()
+        self.playersList = playersList
+        self.hangman = Hangman(name,self.playersList)
+        
+
 class Game(object):
+#class Game(threading.Thread):
     def __init__(self, name,*args, **kwargs):
         #super(Game, self).__init__()
-        #self.lock = threading.Lock()
+        self.playersList_lock = threading.Lock()
         self.difficulty = 1
         self.name = name + str(random.randint(0,10000))
         self.active = False
@@ -39,9 +46,11 @@ class Hangman(Game):
         self.guesses = []
         self.word = None
         self.turn = 0
+        self.newGame = True
         self.puzzleCenter = 40
         self.beginSplash = "*******************\n"
         self.bannerSplash = "*" + "HangMan".center(17) + "*\n"
+        self.gameNameSplash = "*" + self.name.center(17) + "*\n"
         self.endSplash = "*******************\n\n\n"
 
     def addWord(self,word):
@@ -103,14 +112,20 @@ class Hangman(Game):
     def nextPlayer(self):
         #self.lock.acquire()
         print("[+] Getting next player")
-        self.turn += 1 
-        print("turn index: ", self.turn%(len(self.playersList)))
-        self.turn = self.turn %(len(self.playersList))
-        player = self.playersList[self.turn]         
-        print("player at turn index: ", player.name)
-        print("playersList: ", [p.name for p in self.playersList])
-        #self.lock.release()
-        return player
+        if self.newGame:
+            self.turn = 0
+            self.newGame = False
+        else:
+            self.turn +=1
+
+        if self.playersList:
+            print("turn index: ", self.turn%(len(self.playersList)))
+            self.turn = self.turn %(len(self.playersList))
+            player = self.playersList[self.turn]         
+            print("player at turn index: ", player.name)
+            print("playersList: ", [p.name for p in self.playersList])
+            return player
+        return None
 
     def showPuzzle(self):
         #print("[+] Showing Puzzle")
@@ -132,13 +147,13 @@ class Hangman(Game):
 
     def showBoard(self):
         #print("[+] Showing Board to: ", self.playersList[self.turn%(len(self.playersList))])        
-        banner = self.beginSplash + self.bannerSplash + self.endSplash
+        banner = self.beginSplash + self.bannerSplash +self.gameNameSplash + self.endSplash
         board = banner + self.showPuzzle() +  self.showGuesses()+ self.showPlayers() 
         return board
 
     def broadCastBoard(self):
         for player in self.playersList:
-            player.conn.send(self.showBoard())
+            player.send(self.showBoard())
 
     def broadCastExclusive(self,player,msg):
         for p in self.playersList:
@@ -146,15 +161,20 @@ class Hangman(Game):
                 player.send(msg)
 
     def play(self):
-        self.setup()             
-        self.active = True
+        if self.newGame:
+            print("[+] New Game Created!")
+            self.setup()             
+            self.active = True
         print("[+] Starting Game loop")
         while not self.isPuzzleSolved() or not self.isMaxGuesses():
             player = self.nextPlayer() 
-            self.broadCastBoard()
-            guess = player.recv()
-            correct = self.guess(player,guess)
-
+            print("player: ", player)
+            if player:
+                self.broadCastBoard()
+                guess = player.recv()
+                correct = self.guess(player,guess)
+            else:
+                break
             # keep guessing until you have a wrong answer, puzzle is solved or max guesses is reached
             while correct and not self.isPuzzleSolved() and not self.isMaxGuesses():
                 self.broadCastBoard()

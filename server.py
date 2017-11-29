@@ -28,6 +28,10 @@ class Server(object):
     def close(self):
         self.s.close()
 
+menuLock =threading.Lock() 
+gameLock =threading.Lock()
+playersListLock = threading.Lock()
+
 class HangmanServer(Server):
     def __init__(self, host='', port=2222):
         super(HangmanServer,self).__init__(host,port)
@@ -35,6 +39,7 @@ class HangmanServer(Server):
         self.players = []
         self.hallOfFameList = ["Tom", "Dick","Harry"]
         self.gamesList = [Hangman(name="HangmanA"), Hangman(name="HangmanB")]
+        self.gameDict = {}
         #self._populateData()
 
     """
@@ -56,6 +61,14 @@ class HangmanServer(Server):
                     #remove from players list
         
     """
+    def updateGameDict(self, gameName, player):
+        if gameName not in self.gameDict.keys():
+            self.gameDict[gameName] = {}
+            self.gameDict[gameName]["playersList"] = []
+            self.gameDict[gameName]["playersList"].append(player)
+        else:
+            if player not in self.gameDict[gameName]["playersList"]:
+                self.gameDict[gameName]["playersList"].append(player)
 
     def process(self,player, playersList):
         #whle True
@@ -65,53 +78,44 @@ class HangmanServer(Server):
                               hallOfFameList=self.hallOfFameList)
         
             player, gameChoice, difficulty = menu.run() 
-            player.send("Done With Menu\n")
+            #player.send("Done With Menu\n")
             #print("players name: ", player.name)
             #print("players addr: ", player.addr)
             #print("[!] Failed in Menu processing")
 
-            #print("gameChoice: ", gameChoice.getName())
-            print("gameChoice: ", gameChoice)
-            #try:
-            #if gameChoice.getName() not in [x.getName() for x in self.gamesList] :
+            print("[+] gameChoice: ", gameChoice)
+
             #create new game
             if gameChoice not in self.gamesList:
                 print("[+] Creating New Game")
                 #print "gameChoice in gamesList: ", gameChoice.name 
                 hangman = Hangman(name=player.name)
+                #self.updateGameDict(hangman, player) 
+                #print "gameDict: ", self.gameDict
                 self.gamesList.append(hangman)
-                #hangman.start()
-                print("Playing: ", hangman.name)
+                print("[+] Playing: ", hangman.name)
                 hangman.difficulty = difficulty
                 hangman.add(player)
                 active = hangman.play()
-                """
-                if not active:
-                    #kill thread
-                    hangman.join()
-                """
 
             #join existing game
             else:
                 #print("gameChoice: ", gameChoice.getName(), " NOT in gamesList")
                 print("[+] Joining ", gameChoice)
                 hangman = None
-                for game in self.gamesList:
+                for game in self.gameList:
+                #for game in self.gameDict.keys():
                     if game.name == gameChoice.name:
                         game.add(player)
                         hangman = game
                 print("Playing: ", hangman.name)
-                active = hangman.play()
-                """
-                if not active:
-                    hangman.join()
-                """
-            #except:
-            #print("[!] Failure in Game process")
+                if not hangman.active:
+                    hangman.play()
+                
                 
                 
     def run(self):
-        print("[+] Welcome to the Hangman Server\n")
+        print("[+] Hangman Server\n")
         while True:
             # wait to accept connection (blocking call)
             conn, addr = self.s.accept()
@@ -121,7 +125,9 @@ class HangmanServer(Server):
            
             try: 
                 #self.process(player,self.players)
-                start_new_thread(self.process,(player,self.players))
+                t = threading.Thread(target=self.process,args=(player,self.players))
+                t.daemon = True
+                t.start()
             except:
                 print("[!] Failed to create Thread")
 

@@ -106,12 +106,14 @@ class ClientMenu(object):
     def isValid(self,resp):
         if resp == "":
             return False
+        return True
 
     def sendPrompt(self,screen,error=False):
         if error == False:
             self.conn.send(screen)
             d = self.conn.recv(1024)
             if d == "":
+                print("in menu::sendPrompt: recved null string")
                 return None
             return d
         else:
@@ -120,6 +122,10 @@ class ClientMenu(object):
             
     def run(self):
         self.state = 1
+        print("player: ", self.player)
+        print("gameChoice: ", self.gameChoice)
+        print("difficultyLevel: ", self.difficultyLevel)
+
         while True:
             # Main Menu
             if self.state == 1:
@@ -135,18 +141,19 @@ class ClientMenu(object):
                 """
                 menu = "game"
             
-            # return to play Game
-            #if self.state == 4:
-                
             if self.state == 3:
                 return (self.player,self.gameChoice, self.difficultyLevel)
 
-            #print("state: ", self.state)            
-            #print("menu: ", menu)
-            #print("d: ", d)
-            if d != "":
+            print("state: ", self.state)            
+            print("menu: ", menu)
+            print("d: ", d)
+            if d != "" and d != None:
                 if d.isdigit():
                     self.request[menu][int(d)]()
+                else:
+                    print("[+] Selection is not a digit")
+            else:
+                print("[+] invalid Menu selection") 
 
     def print_state(self):
         print("username: ", self.username )
