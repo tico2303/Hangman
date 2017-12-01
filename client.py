@@ -15,11 +15,8 @@ class Client(object):
         self.s.connect((self.host,self.port)) 
         self.data = None
     
-    #def recieve(self):
-    #    return self.s.recv(4096)
     def recieve(self):
-        self.data = self.s.recv(4096)
-        print self.data
+        return  self.s.recv(4096)
 
     def send(self,data):
         self.s.send(data)
@@ -77,7 +74,7 @@ class Client(object):
         self.s.close()
         sys.exit()
 
-c = Client(port=2222)                
+c = Client(port=1222)                
 c.run()
 
 
