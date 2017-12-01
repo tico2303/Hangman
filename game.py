@@ -6,24 +6,10 @@ from os import system
 from words import wordlist
 import threading
 
-<<<<<<< HEAD
-class ThreadedHangman(threading.Thread):
-    def __init__(self, name,playersList=[],*args, **kwargs):
-        super(ThreadedHangman, self).__init__()
-        self.playersList = playersList
-        self.hangman = Hangman(name,self.playersList)
-        
-=======
->>>>>>> temp
 
 class Game(object):
 #class Game(threading.Thread):
     def __init__(self, name,*args, **kwargs):
-<<<<<<< HEAD
-        #super(Game, self).__init__()
-        self.playersList_lock = threading.Lock()
-=======
->>>>>>> temp
         self.difficulty = 1
         self.name = name + str(random.randint(0,10000))
         self.active = False
@@ -121,20 +107,6 @@ class Hangman(Game):
         print("[+] Getting next player")
         if self.newGame:
             self.turn = 0
-<<<<<<< HEAD
-            self.newGame = False
-        else:
-            self.turn +=1
-
-        if self.playersList:
-            print("turn index: ", self.turn%(len(self.playersList)))
-            self.turn = self.turn %(len(self.playersList))
-            player = self.playersList[self.turn]         
-            print("player at turn index: ", player.name)
-            print("playersList: ", [p.name for p in self.playersList])
-            return player
-        return None
-=======
         else:
             self.turn += 1 
 
@@ -144,7 +116,6 @@ class Hangman(Game):
         print("player turn is: ", player.name)
         #print("playersList: ", [p.name for p in self.playersList])
         return player
->>>>>>> temp
 
     def showPuzzle(self):
         #print("[+] Showing Puzzle")
@@ -174,16 +145,11 @@ class Hangman(Game):
         print("[+] Boardcasting Board")
         #print("@ boardCast playersList is: ",self.playersList)
         for player in self.playersList:
-<<<<<<< HEAD
-            player.send(self.showBoard())
-
-=======
             if player == playerturn:
                 player.send("#" + self.showBoard())
             else:
                 player.send(self.showBoard())
             
->>>>>>> temp
     def broadCastExclusive(self,player,msg):
         if player == None:
             for p in self.playersList:
@@ -199,21 +165,6 @@ class Hangman(Game):
 
     def play(self):
         if self.newGame:
-<<<<<<< HEAD
-            print("[+] New Game Created!")
-            self.setup()             
-            self.active = True
-        print("[+] Starting Game loop")
-        while not self.isPuzzleSolved() or not self.isMaxGuesses():
-            player = self.nextPlayer() 
-            print("player: ", player)
-            if player:
-                self.broadCastBoard()
-                guess = player.recv()
-                correct = self.guess(player,guess)
-            else:
-                break
-=======
             self.setup()
             self.newGame = False
         self.active = True
@@ -232,7 +183,6 @@ class Hangman(Game):
             #print(player.name, "'s guess is: ", guess)
             correct = self.guess(player,guess)
             #print("[~] correct: ", correct)
->>>>>>> temp
             # keep guessing until you have a wrong answer, puzzle is solved or max guesses is reached
             while correct and not self.isPuzzleSolved() and not self.isMaxGuesses():
                 #print("[+] In correct Guess Loop")

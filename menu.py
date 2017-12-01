@@ -224,11 +224,8 @@ class ClientMenu(object):
                 d = self.sendPrompt("#"+ self.gamesScreen )     
                 menu = "game"
             
-<<<<<<< HEAD
-=======
             
             # return to play Game
->>>>>>> temp
             if self.state == 3:
                 return (self.player,self.gameChoice, self.difficultyLevel)
                 #return (self.username, self.gameChoice, self.difficultyLevel)
@@ -238,18 +235,6 @@ class ClientMenu(object):
                 d = self.sendPrompt(self.adminSplashScreen +self.adminScreen)
                 menu = "admin" 
 
-<<<<<<< HEAD
-            print("state: ", self.state)            
-            print("menu: ", menu)
-            print("d: ", d)
-            if d != "" and d != None:
-                if d.isdigit():
-                    self.request[menu][int(d)]()
-                else:
-                    print("[+] Selection is not a digit")
-            else:
-                print("[+] invalid Menu selection") 
-=======
             if d != "":
                 if d.isdigit():
                     print(d)
@@ -265,7 +250,6 @@ class ClientMenu(object):
                     print("[!] invalid selection NOT a digit")
                     self.conn.send("[!] Invalid selection NOT a digit")
                     sleep(0.25)
->>>>>>> temp
 
     def print_state(self):
         print("username: ", self.username )
