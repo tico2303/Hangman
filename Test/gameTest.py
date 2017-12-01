@@ -50,6 +50,7 @@ class Hangman(Game):
         self.beginSplash = "*******************\n"
         self.bannerSplash = "*" + "HangMan".center(17) + "*\n"
         self.endSplash = "*******************\n\n\n"
+        self.newGame = True
 
     def addWord(self,word):
         if word not in self.wordList:
@@ -115,7 +116,11 @@ class Hangman(Game):
     def nextPlayer(self):
         #self.lock.acquire()
         print("[+] Getting next player")
-        self.turn += 1 
+        if self.newGame:
+            self.turn = 0
+            self.newGame = False
+        else:
+            self.turn += 1 
         print("turn index: ", self.turn%(len(self.playersList)))
         self.turn = self.turn %(len(self.playersList))
         player = self.playersList[self.turn]         

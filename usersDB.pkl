@@ -1,0 +1,17 @@
+(lp0
+(S'Admin'
+p1
+S'admin'
+p2
+tp3
+a(S'Robert'
+p4
+S'mypass'
+p5
+tp6
+a(S'Tico'
+p7
+S'tico'
+p8
+tp9
+a.

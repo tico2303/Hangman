@@ -1,0 +1,10 @@
+(lp0
+(S'Tico'
+p1
+I30
+tp2
+a(S'Robert'
+p3
+I30
+tp4
+a.
