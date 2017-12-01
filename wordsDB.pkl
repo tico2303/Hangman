@@ -1,0 +1,14 @@
+(lp0
+S'roshi'
+p1
+aS'superman'
+p2
+aS'simplicity'
+p3
+aS'abstraction'
+p4
+aS'roshi'
+p5
+aS'complexity'
+p6
+a.

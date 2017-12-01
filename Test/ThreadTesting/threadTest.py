@@ -17,8 +17,8 @@ def threader():
         exampleJob(worker)
         q.task_done()
 
+# q is asycronous and plays well with threads
 q = Queue()
-
 # creating 10 Threads
 for x in range(10):
     t = threading.Thread(target=threader)
