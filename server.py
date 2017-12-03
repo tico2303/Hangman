@@ -5,6 +5,7 @@ import threading
 from thread import start_new_thread
 import sys
 from menu import ClientMenu
+from menu import AdminMenu
 from users import Player
 from game import Hangman
 from repo import *
@@ -56,7 +57,7 @@ class HangmanServer(Server):
         if player.name in dict(self.hallOfFameList): 
             for i, (name, score) in enumerate(self.hallOfFameList):
                 if name == player.name:
-                    print("[+] Updating hallOfFameList")
+                    #print("[+] Updating hallOfFameList")
                     self.hallOfFameList[i] = (player.name, player.score +score)    
         else:
             self.hallOfFameList.append((player.name, player.score))        
@@ -80,7 +81,7 @@ class HangmanServer(Server):
 
             #Create New Game
             if gameChoice not in self.gamesList:
-                print("[+] Creating New Game")
+                #print("[+] Creating New Game")
                 hangman = Hangman(name=player.name, wordrepo=self.wordRepo)
                 self.gamesList.append(hangman)
                 hangman.difficulty = difficulty
@@ -97,12 +98,12 @@ class HangmanServer(Server):
             #Join Existing Game
             else:
                 if gameChoice != None:
-                    print("[+] ", player.name, " Joining ", gameChoice.name)
+                    #print("[+] ", player.name, " Joining ", gameChoice.name)
                     hangman = None
                     for game in self.gamesList:
                         if game.name == gameChoice.name:
                             if player not in game.playersList:
-                                print("Adding player: ", player.name, " to ", game.name)
+                                #print("Adding player: ", player.name, " to ", game.name)
                                 game.add(player)
                                 hangman = game
 
@@ -115,7 +116,7 @@ class HangmanServer(Server):
 
                 
     def run(self):
-        print("[+] The Hangman Server\n")
+        #print("[+] The Hangman Server\n")
         while True:
             # wait to accept connection (blocking call)
             conn, addr = self.s.accept()
@@ -131,12 +132,28 @@ class HangmanServer(Server):
                 t.start()
                 #start_new_thread(self.process,(player,self.players))
             except:
-                print("[!] Failed to create Thread")
+                pass
+                #print("[!] Failed to create Thread")
 
+    def serverMenu(self):
+        active = True
+        while active:
+            servermenu = AdminMenu(usersrepo=self.usersRepo, wordrepo=self.wordRepo,
+                                    gameList=self.gamesList, hallOfFameList=self.hallOfFameList)            
+            active = servermenu.run()
+        print("[+] Exing Admin Menu")
+        sys.exit()
 
 if __name__ == "__main__":
     hofrepo = HallofFameRepo("hofDB.pkl")
     usersrepo = UsersRepo("usersDB.pkl")
     wordrepo = WordRepo("wordsDB.pkl")
-    s = HangmanServer(port=2222,hofrepo=hofrepo,wordrepo=wordrepo, usersrepo=usersrepo)
-    s.run()
+
+
+    hangmanS = HangmanServer(port=1222,hofrepo=hofrepo,wordrepo=wordrepo, usersrepo=usersrepo)
+    t = threading.Thread(target=hangmanS.serverMenu,args=())
+    t.daemon = True
+    t.start()
+    hangmanS.run()
+
+

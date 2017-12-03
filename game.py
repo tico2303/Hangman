@@ -8,7 +8,6 @@ import threading
 
 
 class Game(object):
-#class Game(threading.Thread):
     def __init__(self, name,*args, **kwargs):
         self.difficulty = 1
         self.name = name + str(random.randint(0,10000))
@@ -17,6 +16,12 @@ class Game(object):
     def play(self):
         raise NotImplementedError
 
+    def add(self,player):
+        raise NotImplementedError
+    
+    def remove(self,player):
+        raise NotImplementedError
+        
 class Hangman(Game):
     def __init__(self,wordrepo,name=None, playersList=[], *args, **kwargs):
         super(Hangman,self).__init__(name,*args, **kwargs) 
@@ -38,7 +43,7 @@ class Hangman(Game):
         return repr(self) + "GameName:" +self.name + ", PlayersList: [" +" ".join([p.name for p in self.playersList]) + "]"
 
     def add(self,player):
-        print("[+] Player: ", player.name, " joined the Game!")
+        #print("[+] Player: ", player.name, " joined the Game!")
         if player not in self.playersList:
             self.playersList.append(player)
 
@@ -68,7 +73,7 @@ class Hangman(Game):
             return False
 
     def guessLetter(self, player, letter):
-        print("[+] Guessing letter")
+        #print("[+] Guessing letter")
         correct = False
         self.guesses.append(letter)
         for index,ch in enumerate(self.word):
@@ -92,30 +97,33 @@ class Hangman(Game):
         else:
             correct = self.guessWord(player,guess)
             if not correct:
-                print("[+] Incorrect Word Guess.. removing: ", player.name)
+                #print("[+] Incorrect Word Guess.. removing: ", player.name)
                 self.remove(player)
         return correct
 
     def setup(self):
-        print("[+] Setting up hangman game")
+        #print("[+] Setting up hangman game")
         self.word = self.getRandomWord()
         self.puzzle = [ "_" for i in range(len(self.word))]
         for index, letter in enumerate(self.word):
             self.solution[index] = letter
 
     def nextPlayer(self):
-        print("[+] Getting next player")
+        #print("[+] Getting next player")
         if self.newGame:
             self.turn = 0
         else:
             self.turn += 1 
-
-        #print("turn index: ", self.turn%(len(self.playersList)))
-        self.turn = self.turn %(len(self.playersList))
-        player = self.playersList[self.turn]         
-        print("player turn is: ", player.name)
-        #print("playersList: ", [p.name for p in self.playersList])
-        return player
+        if len(self.playersList) >= 1:
+            #print("turn index: ", self.turn%(len(self.playersList)))
+            self.turn = self.turn %(len(self.playersList))
+            player = self.playersList[self.turn]         
+            #print("player turn is: ", player.name)
+            #print("playersList: ", [p.name for p in self.playersList])
+            return player
+        #no players
+        else:
+            return None 
 
     def showPuzzle(self):
         #print("[+] Showing Puzzle")
@@ -142,7 +150,7 @@ class Hangman(Game):
         return board
 
     def broadCastBoard(self, playerturn=None,):
-        print("[+] Boardcasting Board")
+        #print("[+] Boardcasting Board")
         #print("@ boardCast playersList is: ",self.playersList)
         for player in self.playersList:
             if player == playerturn:
@@ -159,22 +167,19 @@ class Hangman(Game):
                 if p != player:
                     p.send(msg)
 
-    def printPlayers(self):
-        for players in self.playersList:
-            print(players.name ,", " )
-
     def play(self):
         if self.newGame:
             self.setup()
             self.newGame = False
         self.active = True
-        print("[+] Starting Game loop")
+        #print("[+] Starting Game loop")
 
         while not self.isPuzzleSolved() and not self.isMaxGuesses():
-            print("[~] Current PlayersList: ", self.printPlayers())
             #print("[~] iPuzzleSolved: ", self.isPuzzleSolved())
             #print("[~] isMaxGuesses: ", self.isMaxGuesses())
             player = self.nextPlayer()
+            if player == None:
+                break
             #print("Current player: ", player.name, " 's turn")
             self.broadCastBoard(playerturn=player)
             #player.send("#" + "It's your turn " + player.name + "\n")
@@ -193,7 +198,7 @@ class Hangman(Game):
                     break
 
         if self.isPuzzleSolved():
-            print("[+] ", self.name, " was solved by ", player.name, "!")
+            #print("[+] ", self.name, " was solved by ", player.name, "!")
             self.broadCastBoard()
             player.send(str(player.name) +" YOU WON!\n\n")
             self.broadCastExclusive(player,"You Lost\n\n")

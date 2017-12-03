@@ -1,14 +1,10 @@
 (lp0
-S'roshi'
+S'complexity'
 p1
-aS'superman'
+aS'roshi'
 p2
 aS'simplicity'
 p3
-aS'abstraction'
+aS'entropy'
 p4
-aS'roshi'
-p5
-aS'complexity'
-p6
 a.

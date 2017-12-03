@@ -16,7 +16,7 @@ class Repo(object):
 class HallofFameRepo(Repo):
     def __init__(self,filename):
         super(HallofFameRepo,self).__init__(filename)
-
+    
 class UsersRepo(Repo):
     def __init__(self,filename):
         super(UsersRepo,self).__init__(filename)
