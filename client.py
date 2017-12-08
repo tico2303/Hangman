@@ -14,7 +14,6 @@ class Client(object):
         self.port = port
         self.s.connect((self.host,self.port)) 
         self.data = None
-    
     def recieve(self):
         return  self.s.recv(4096)
 

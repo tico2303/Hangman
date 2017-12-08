@@ -13,10 +13,10 @@ I7
 tp6
 a(S'Tico'
 p7
-I71
+I77
 tp8
 a(S'Robert'
 p9
-I93
+I94
 tp10
 a.

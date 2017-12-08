@@ -77,6 +77,7 @@ class HangmanServer(Server):
             player, gameChoice, difficulty = menu.run() 
             self.process(player, gameChoice, difficulty)
 
+
     def process(self, player, gameChoice, difficulty ):
 
             #Create New Game
