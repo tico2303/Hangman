@@ -52,41 +52,35 @@ class HangmanServer(Server):
     
 
     def updateHallofFame(self,player):
-        self.hallLock.acquire()
 
         if player.name in dict(self.hallOfFameList): 
             for i, (name, score) in enumerate(self.hallOfFameList):
                 if name == player.name:
-                    #print("[+] Updating hallOfFameList")
                     self.hallOfFameList[i] = (player.name, player.score +score)    
         else:
             self.hallOfFameList.append((player.name, player.score))        
 
         self.hallOfFameList.sort(key=lambda x:x[1])        
         self.hofRepo.saveData(self.hallOfFameList)
-        self.hallLock.release()
         player.score = 0
         
     def menu(self, player):
-            self.menuLock.acquire()
             menu = ClientMenu(player=player, usersrepo=self.usersRepo,
                               gameList=self.gamesList, 
                               hallOfFameList=self.hallOfFameList,
                               wordrepo=self.wordRepo)
-            self.menuLock.release()
             player, gameChoice, difficulty = menu.run() 
             self.process(player, gameChoice, difficulty)
 
 
     def process(self, player, gameChoice, difficulty ):
 
-            #Create New Game
             if gameChoice not in self.gamesList:
-                #print("[+] Creating New Game")
                 hangman = Hangman(name=player.name, wordrepo=self.wordRepo)
                 self.gamesList.append(hangman)
                 hangman.difficulty = difficulty
                 hangman.add(player)
+                print hangman.playersList
                 for p in hangman.playersList:
                     if p != player:
                         hangman.playersList.remove(p)
@@ -99,12 +93,10 @@ class HangmanServer(Server):
             #Join Existing Game
             else:
                 if gameChoice != None:
-                    #print("[+] ", player.name, " Joining ", gameChoice.name)
                     hangman = None
                     for game in self.gamesList:
                         if game.name == gameChoice.name:
                             if player not in game.playersList:
-                                #print("Adding player: ", player.name, " to ", game.name)
                                 game.add(player)
                                 hangman = game
 
@@ -117,7 +109,6 @@ class HangmanServer(Server):
 
                 
     def run(self):
-        #print("[+] The Hangman Server\n")
         while True:
             # wait to accept connection (blocking call)
             conn, addr = self.s.accept()
@@ -131,10 +122,8 @@ class HangmanServer(Server):
                 t.setName(str(conn))
                 t.daemon = True
                 t.start()
-                #start_new_thread(self.process,(player,self.players))
             except:
                 pass
-                #print("[!] Failed to create Thread")
 
     def serverMenu(self):
         active = True
@@ -149,9 +138,9 @@ if __name__ == "__main__":
     hofrepo = HallofFameRepo("hofDB.pkl")
     usersrepo = UsersRepo("usersDB.pkl")
     wordrepo = WordRepo("wordsDB.pkl")
-
-
     hangmanS = HangmanServer(port=1222,hofrepo=hofrepo,wordrepo=wordrepo, usersrepo=usersrepo)
+
+    # thread for server menu
     t = threading.Thread(target=hangmanS.serverMenu,args=())
     t.daemon = True
     t.start()

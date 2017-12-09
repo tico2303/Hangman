@@ -32,33 +32,22 @@ class AdminMenu(object):
             print(screen)
 
     def getCurrentUsers(self):
-        #msg = self.adminSplashScreen
         msg = "[+] Current Users:\n"
-        #print("usersList: ", self.usersList)
         for name, _ in self.usersList:
             msg += str(name) +"\n"
-        #msg +="\nEnter ANY number to return to menu\n"
-        #self.conn.send(msg)
         self.sendPrompt(msg,resp=False)
-        #sleep(0.25)
         
     def getCurrentWords(self):
         msg = "[+] Current Word List:\n" 
         words = self.wordRepo.getData()
-        #print("words: ", words)
         for word in words:
             msg += str(word) +"\n"
-        #msg +="\nEnter ANY number to return to menu\n"
-        #self.conn.send(msg)
         self.sendPrompt(msg,resp=False)
-        #sleep(0.25)
             
     def addWords(self):
-        #msg = self.adminSplashScreen
         msg = "[+] Enter word to Add\n"
         word = self.sendPrompt(msg)
         wordlist = self.wordRepo.getData()
-        #print("wordList: ", wordlist)
         if word not in wordlist:
             print("wordlist: ", wordlist)
             wordlist.append(word)
@@ -84,7 +73,6 @@ class AdminMenu(object):
 
 class ClientMenu(object):
     def __init__(self,usersrepo, wordrepo, player=None, gameList=[], hallOfFameList=[]):
-        #self.conn = conn
         self.conn = player.conn
         self.difficultyLevel = 0
         self.player = player
@@ -113,12 +101,10 @@ class ClientMenu(object):
                         }
 
     def login(self):
-        #print("[+] Processing Login")
         username = self.sendPrompt("#" + self.loginScreen1)
         password = self.sendPrompt("#" + self.loginScreen2)
         #Authenticate Login
         if (username,password) not in self.usersList or "#" in username:
-            #print("[!] Authentication Failed!")
             self.conn.send("[!] Authentication Failed!\nPlease try again\n\n") 
             sleep(0.25)
             self.state = 1
@@ -127,7 +113,6 @@ class ClientMenu(object):
             for user, paswd in self.usersList:
                 if user == username and paswd == password:
                     msg = "[+] User: " + str(username) + " Authenticated!\n"
-                    #print(msg)
                     self.conn.send(msg)
                     sleep(0.25)
                     self.player.name = username 
@@ -141,27 +126,20 @@ class ClientMenu(object):
                     return self.state
 
     def _getTop(self,x):
-        #print("[+] Getting top ", x, " Hall-of-Famers")
-        #print("hallOfFame: ", self.hallOfFameList)
-        top = []
         length = len(self.hallOfFameList)
         if x > length-1:
             x = length-1
         for i in range(length-1,length-x-1,-1):
-            #print("index: ", i)
             p = self.hallOfFameList[i]
             top.append(str(p[0]) +": " + str(p[1]))  
-        #print("top: ", top)
         return top
 
     def makeUser(self):
-        #print("[+] Making User...")
         username = self.sendPrompt("#" + self.loginScreen1)
         password = self.sendPrompt("#" + self.loginScreen2)
         for name, _ in self.usersList:
             if name == username:
                 msg = "[+] OoOops!\nUsername Already taken try another one\n"
-                #print(msg)
                 self.conn.send(msg)
                 sleep(0.25)
                 return None
@@ -176,9 +154,7 @@ class ClientMenu(object):
         return self.state
 
     def hall(self):
-        #print("[+] Retrieving Hall of Fame...")
         msg = "***HALL OF FAME***\n"+"\n".join(self._getTop(3)) +"\n"+"*"*18+"\n"
-        #self.sendPrompt(msg)
         self.conn.send(msg) 
         sleep(0.25)
         return 1 
@@ -187,10 +163,8 @@ class ClientMenu(object):
 
 ## Game Menu ##
     def getGamesList(self):
-        #print("[+] Serving Games List...")
         g = [str(i+1)+"."+game.name+"\n" for i,game in enumerate(self.gamesList)]
         if len(g) ==0:
-            #print("[+] Game list Empty")
             self.conn.send("[+] No active games right now... Please Create one")
             self.state = 2
             return None 
@@ -202,15 +176,12 @@ class ClientMenu(object):
             return 1
         else:
             if not choice.isdigit():
-                #print("[!] Invalid Games menu option: is Not a digit")
                 self.conn.send("[!] Invalid Games menu option: is Not a digit")
             else:
-                #print("[!] Invalid Games menu option")
                 self.conn.send("[!] Invalid Games menu option")
             return None
 
     def difficulty(self):
-        #print("[+] Setting Difficulty Level...")
         self.difficultyLevel = self.sendPrompt("#" +self.difficultyScreen)
         self.state = 3
         return self.state
@@ -260,11 +231,9 @@ class ClientMenu(object):
                 d = self.sendPrompt("#"+ self.gamesScreen )     
                 menu = "game"
             
-            
             # return to play Game
             if self.state == 3:
                 return (self.player,self.gameChoice, self.difficultyLevel)
-                #return (self.username, self.gameChoice, self.difficultyLevel)
             
             # Admin Menu
             if self.state == 4:
@@ -273,17 +242,12 @@ class ClientMenu(object):
 
             if d != "":
                 if d.isdigit():
-                    #print(d)
-                    #print ("keys: ", self.request[menu].keys())
                     if int(d) in self.request[menu].keys():
-                        #print(d, "is in request menu!")
                         self.request[menu][int(d)]()
                     else:
-                        #print("[!] invalid selection NOT in menu")
                         self.conn.send("[!] Invalid selection NOT in menu")
                         sleep(0.25)
                 else:
-                    #print("[!] invalid selection NOT a digit")
                     self.conn.send("[!] Invalid selection NOT a digit")
                     sleep(0.25)
 

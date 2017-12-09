@@ -73,7 +73,11 @@ class Client(object):
         self.s.close()
         sys.exit()
 
-c = Client(port=1222)                
+if(len(sys.argv) >1):
+    host = sys.argv[1]
+else:
+    host = "localhost"
+c = Client(host=host,port=1222)                
 c.run()
 
 
