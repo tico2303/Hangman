@@ -4,11 +4,11 @@ import socket
 import threading
 from thread import start_new_thread
 import sys
-from menu import ClientMenu
-from menu import AdminMenu
-from users import Player
-from game import Hangman
-from repo import *
+from src.menu import ClientMenu
+from src.menu import AdminMenu
+from src.users import Player
+from src.game import Hangman
+from src.repo import *
 
 class Server(object):
     def __init__(self, host='', port=2222):
@@ -80,7 +80,7 @@ class HangmanServer(Server):
                 self.gamesList.append(hangman)
                 hangman.difficulty = difficulty
                 hangman.add(player)
-                print hangman.playersList
+                print(hangman.playersList)
                 for p in hangman.playersList:
                     if p != player:
                         hangman.playersList.remove(p)
