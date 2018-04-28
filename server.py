@@ -135,9 +135,9 @@ class HangmanServer(Server):
         sys.exit()
 
 if __name__ == "__main__":
-    hofrepo = HallofFameRepo("hofDB.pkl")
-    usersrepo = UsersRepo("usersDB.pkl")
-    wordrepo = WordRepo("wordsDB.pkl")
+    hofrepo = HallofFameRepo("src/hofDB.pkl")
+    usersrepo = UsersRepo("src/usersDB.pkl")
+    wordrepo = WordRepo("src/wordsDB.pkl")
     hangmanS = HangmanServer(port=1222,hofrepo=hofrepo,wordrepo=wordrepo, usersrepo=usersrepo)
 
     # thread for server menu
