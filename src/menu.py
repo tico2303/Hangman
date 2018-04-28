@@ -126,6 +126,7 @@ class ClientMenu(object):
                     return self.state
 
     def _getTop(self,x):
+        top = []
         length = len(self.hallOfFameList)
         if x > length-1:
             x = length-1
